@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import request from "supertest"
-import { createHttpApp, routeMessage, shouldProcess } from "../src/transport.js"
+import { createHttpApp, extractIncoming, routeMessage, shouldProcess, startBot, type SocketLike } from "../src/transport.js"
 import { createMemoryStore } from "../src/store.js"
 import type { AppConfig } from "../src/config.js"
 import type { Agent } from "../src/agent.js"
@@ -11,6 +11,61 @@ const config = {
   bootstrapToken: "rahasia",
   port: 3000,
 } as AppConfig
+
+describe("startBot", () => {
+  it("mengganti socket saat koneksi terputus", async () => {
+    const sockets: Array<{
+      handlers: Record<string, (payload: unknown) => void>
+      end: ReturnType<typeof vi.fn>
+    }> = []
+    const socketFactory = () => {
+      const handlers: Record<string, (payload: unknown) => void> = {}
+      const socket = {
+        handlers,
+        ev: {
+          on: (event: string, handler: (payload: unknown) => void) => {
+            handlers[event] = handler
+          },
+        },
+        sendMessage: vi.fn(async () => {}),
+        end: vi.fn(),
+      }
+      sockets.push(socket)
+      return socket
+    }
+    const holder: { socket?: SocketLike } = {}
+
+    await startBot({
+      config,
+      store: createMemoryStore(),
+      agent: {} as Agent,
+      socketFactory: socketFactory as never,
+      holder,
+    })
+    expect(holder.socket).toBe(sockets[0])
+
+    sockets[0].handlers["connection.update"]({
+      connection: "close",
+      lastDisconnect: { error: { output: { statusCode: 500 } } },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(holder.socket).toBe(sockets[1])
+  })
+})
+
+describe("extractIncoming", () => {
+  it("memakai participantPn bila participant berbentuk LID", () => {
+    const message = {
+      key: {
+        remoteJid: "1203630@g.us",
+        participant: "62812@s.whatsapp.net_lid",
+        participantPn: "62812@s.whatsapp.net",
+      },
+      message: { conversation: "/status" },
+    } as never
+    expect(extractIncoming(message)?.senderJid).toBe("62812@s.whatsapp.net")
+  })
+})
 
 describe("shouldProcess", () => {
   it("menerima perintah master", () => {

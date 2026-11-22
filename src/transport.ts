@@ -107,18 +107,27 @@ export function extractIncoming(message: WAMessage): IncomingMessage | null {
     message.message?.conversation ?? message.message?.extendedTextMessage?.text ?? null
   if (!chatJid || !text) return null
 
+  const key = message.key as { participant?: string; participantPn?: string }
   const senderJid = chatJid.endsWith("@g.us")
-    ? message.key.participant ?? ""
+    ? key.participantPn ?? key.participant ?? ""
     : chatJid
 
   return { chatJid, senderJid, text }
+}
+
+export type SocketLike = {
+  ev: { on: (event: string, handler: (payload: any) => void) => void }
+  sendMessage: (chatJid: string, content: { text: string }) => Promise<unknown>
+  end: (error?: Error) => void
 }
 
 export async function startBot(deps: {
   config: AppConfig
   store: Store
   agent: Agent
-}): Promise<{ app: Express; socket: ReturnType<typeof makeWASocket> }> {
+  socketFactory?: () => SocketLike
+  holder?: { socket?: SocketLike }
+}): Promise<{ app: Express; socket: SocketLike }> {
   const { config, store, agent } = deps
   let currentQr: string | null = null
 
@@ -165,11 +174,15 @@ export async function startBot(deps: {
 
   const auth: AuthenticationState = { creds: creds as AuthenticationState["creds"], keys: keyStore as never }
 
-  const socket = makeWASocket({
-    auth,
-    browser: Browsers.macOS("Desktop"),
-    printQRInTerminal: false,
-  })
+  const socket: SocketLike = deps.socketFactory
+    ? deps.socketFactory()
+    : (makeWASocket({
+        auth,
+        browser: Browsers.macOS("Desktop"),
+        printQRInTerminal: false,
+      }) as unknown as SocketLike)
+
+  if (deps.holder) deps.holder.socket = socket
 
   socket.ev.on("creds.update", persist)
 

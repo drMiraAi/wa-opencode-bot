@@ -4,6 +4,7 @@ import type { Store, TranscriptMessage } from "./store.js"
 export interface SdkLike {
   sessions: {
     create(input: { location: { directory: string } }): Promise<{ id: string }>
+    get(input: { sessionID: string }): Promise<unknown>
     prompt(input: { sessionID: string; text: string }): Promise<unknown>
   }
   message: {
@@ -26,6 +27,7 @@ export interface Agent {
 }
 
 const QUOTA_REPLY = "Kuota gratis OpenRouter habis. Coba lagi besok."
+const IDLE_TIMEOUT_MS = 120_000
 
 function isQuotaError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
@@ -36,14 +38,25 @@ export async function createAgent(deps: {
   sdk: SdkLike
   store: Store
   config: AppConfig
+  idleTimeoutMs?: number
 }): Promise<Agent> {
   const { sdk, store, config } = deps
+  const timeout = deps.idleTimeoutMs ?? IDLE_TIMEOUT_MS
 
   return {
     async prompt(text) {
       let sessionId = await store.loadSessionId()
-      let prefix = ""
 
+      if (sessionId) {
+        try {
+          await sdk.sessions.get({ sessionID: sessionId })
+        } catch {
+          sessionId = null
+          await store.saveSessionId(null)
+        }
+      }
+
+      let prefix = ""
       if (!sessionId) {
         const history = await store.loadTranscript(20)
         if (history.length > 0) {
@@ -57,37 +70,47 @@ export async function createAgent(deps: {
         await store.saveSessionId(sessionId)
       }
 
-      const subscription = sdk.events.subscribe({ types: ["session.idle"] })
-      const waitForIdle = (async () => {
-        for await (const event of subscription) {
-          if (event.type === "session.idle" && event.data?.sessionID === sessionId) return
+      const iterator = sdk.events.subscribe({ types: ["session.idle"] })[Symbol.asyncIterator]()
+      const idle = (async () => {
+        while (true) {
+          const step = await iterator.next()
+          if (step.done) return
+          if (step.value.type === "session.idle" && step.value.data?.sessionID === sessionId) return
         }
       })()
 
+      let timer: ReturnType<typeof setTimeout> | undefined
       try {
         await sdk.sessions.prompt({ sessionID: sessionId, text: prefix + text })
+        await Promise.race([
+          idle,
+          new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, timeout)
+          }),
+        ])
+
+        const { data } = await sdk.message.list({ sessionID: sessionId })
+        const assistant = [...data].reverse().find((message) => message.type === "assistant")
+        const answer = (assistant?.content ?? [])
+          .filter((part) => part.type === "text")
+          .map((part) => part.text ?? "")
+          .join("\n")
+
+        const at = new Date().toISOString()
+        const pair: TranscriptMessage[] = [
+          { role: "user", content: text, at },
+          { role: "assistant", content: answer, at },
+        ]
+        await store.appendTranscript(pair)
+
+        return answer
       } catch (error) {
         if (isQuotaError(error)) return QUOTA_REPLY
         throw error
+      } finally {
+        if (timer) clearTimeout(timer)
+        await iterator.return?.()
       }
-
-      await waitForIdle
-
-      const { data } = await sdk.message.list({ sessionID: sessionId })
-      const assistant = [...data].reverse().find((message) => message.type === "assistant")
-      const answer = (assistant?.content ?? [])
-        .filter((part) => part.type === "text")
-        .map((part) => part.text ?? "")
-        .join("\n")
-
-      const at = new Date().toISOString()
-      const pair: TranscriptMessage[] = [
-        { role: "user", content: text, at },
-        { role: "assistant", content: answer, at },
-      ]
-      await store.appendTranscript(pair)
-
-      return answer
     },
 
     async reset() {
