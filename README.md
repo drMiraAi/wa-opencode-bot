@@ -24,6 +24,20 @@ Jangan pernah menaruh nilai ini di chat, file, atau log.
 2. Nomor yang dipakai Baileys adalah nomor master sendiri sebagai perangkat tertaut, jadi bot tidak ditambahkan sebagai anggota terpisah.
 3. JID grup berakhir dengan `@g.us`, JID personal berakhir dengan `@s.whatsapp.net`.
 
+## Mendapatkan JID grup dan nomor
+
+Script `list-jids` memakai auth state yang sama dengan bot, sehingga QR hanya perlu dipindai sekali.
+
+PowerShell:
+
+```powershell
+$env:SUPABASE_URL="https://fgwbuirplhzdurtdwolm.supabase.co"
+$env:SUPABASE_KEY="<secret key dari Supabase>"
+npm run list-jids
+```
+
+Jika auth belum ada, QR akan muncul di terminal — pindai lewat WhatsApp → **Perangkat Tertaut** → **Tautkan perangkat**. Setelah terhubung, script mencetak nama grup, JID grup (`...@g.us`), dan JID semua peserta (`...@s.whatsapp.net`). Jangan menaruh secret key ke dalam file.
+
 ## Supabase
 
 1. Buat project Supabase baru (tier gratis).

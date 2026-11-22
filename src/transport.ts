@@ -3,11 +3,10 @@ import QRCode from "qrcode"
 import {
   Browsers,
   DisconnectReason,
-  initAuthCreds,
   makeWASocket,
-  type AuthenticationState,
   type WAMessage,
 } from "@whiskeysockets/baileys"
+import { createAuthState } from "./auth.js"
 import type { AppConfig } from "./config.js"
 import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
@@ -137,42 +136,7 @@ export async function startBot(deps: {
     qrPng: async () => (currentQr ? QRCode.toBuffer(currentQr) : null),
   })
 
-  const saved = await store.loadAuthState()
-  const creds = { ...(initAuthCreds() as object), ...(saved?.creds ?? {}) }
-  const keys: Record<string, Record<string, unknown>> = { ...(saved?.keys ?? {}) }
-  let timer: ReturnType<typeof setTimeout> | undefined
-
-  const persist = () => {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      void store.saveAuthState({ creds, keys })
-    }, 1000)
-  }
-
-  const keyStore = {
-    async get(type: string, ids: string[]) {
-      const result: Record<string, unknown> = {}
-      for (const id of ids) {
-        const value = keys[type]?.[id]
-        if (value !== undefined) result[id] = value
-      }
-      return result
-    },
-    async set(data: Record<string, Record<string, unknown>>) {
-      for (const [type, entries] of Object.entries(data)) {
-        keys[type] = { ...(keys[type] ?? {}), ...entries }
-      }
-      persist()
-    },
-    async del(type: string, ids: string[]) {
-      for (const id of ids) {
-        if (keys[type]) delete keys[type]![id]
-      }
-      persist()
-    },
-  }
-
-  const auth: AuthenticationState = { creds: creds as AuthenticationState["creds"], keys: keyStore as never }
+  const { auth, persist } = await createAuthState(store)
 
   const socket: SocketLike = deps.socketFactory
     ? deps.socketFactory()
