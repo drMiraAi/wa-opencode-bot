@@ -51,6 +51,31 @@ describe("startBot", () => {
     await new Promise((resolve) => setTimeout(resolve, 10))
     expect(holder.socket).toBe(sockets[1])
   })
+
+  it("memanggil onReady saat koneksi terbuka", async () => {
+    const handlers: Record<string, (payload: unknown) => void> = {}
+    const socketFactory = () => ({
+      handlers,
+      ev: {
+        on: (event: string, handler: (payload: unknown) => void) => {
+          handlers[event] = handler
+        },
+      },
+      sendMessage: vi.fn(async () => {}),
+      end: vi.fn(),
+    })
+    const onReady = vi.fn()
+
+    await startBot({
+      config,
+      store: createMemoryStore(),
+      agent: {} as Agent,
+      socketFactory: socketFactory as never,
+      onReady,
+    })
+    handlers["connection.update"]({ connection: "open" })
+    expect(onReady).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("extractIncoming", () => {

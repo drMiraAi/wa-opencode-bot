@@ -126,6 +126,7 @@ export async function startBot(deps: {
   agent: Agent
   socketFactory?: () => SocketLike
   holder?: { socket?: SocketLike }
+  onReady?: () => void
 }): Promise<{ app: Express; socket: SocketLike }> {
   const { config, store, agent } = deps
   let currentQr: string | null = null
@@ -171,6 +172,7 @@ export async function startBot(deps: {
     if (qr) currentQr = qr
     if (connection === "open") {
       void store.setQrDisabled(true)
+      deps.onReady?.()
     }
     if (connection === "close") {
       const reason = (lastDisconnect?.error as { output?: { statusCode?: number } } | undefined)?.output?.statusCode

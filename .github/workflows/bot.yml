@@ -9,6 +9,11 @@ on:
         description: "Pesan laporan yang dikirim ke grup WhatsApp"
         required: false
         type: string
+      notify_only:
+        description: "Kirim pesan lalu selesai (tanpa menjalankan bot)"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: wa-opencode-bot
@@ -40,4 +45,5 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           REPORT_TEXT: ${{ inputs.message }}
+          NOTIFY_ONLY: ${{ inputs.notify_only }}
         run: node dist/index.js
