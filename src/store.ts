@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js"
-import type { AuthenticationState } from "@whiskeysockets/baileys"
 import type { AppConfig } from "./config.js"
+
+export type SerializedAuth = {
+  creds: Record<string, unknown>
+  keys: Record<string, Record<string, unknown>>
+}
 
 export type TranscriptMessage = {
   role: "user" | "assistant"
@@ -9,8 +13,8 @@ export type TranscriptMessage = {
 }
 
 export interface Store {
-  loadAuthState(): Promise<AuthenticationState | null>
-  saveAuthState(state: AuthenticationState): Promise<void>
+  loadAuthState(): Promise<SerializedAuth | null>
+  saveAuthState(state: SerializedAuth): Promise<void>
   loadSessionId(): Promise<string | null>
   saveSessionId(id: string | null): Promise<void>
   appendTranscript(messages: TranscriptMessage[]): Promise<void>
@@ -21,7 +25,7 @@ export interface Store {
 }
 
 export function createMemoryStore(): Store {
-  let authState: AuthenticationState | null = null
+  let authState: SerializedAuth | null = null
   let sessionId: string | null = null
   let transcript: TranscriptMessage[] = []
   let qrDisabled = false
@@ -68,7 +72,7 @@ export function createSupabaseStore(config: AppConfig): Store {
         .eq("id", "singleton")
         .maybeSingle()
       if (error) throw error
-      return (data?.state as AuthenticationState) ?? null
+      return (data?.state as SerializedAuth) ?? null
     },
 
     async saveAuthState(state) {
