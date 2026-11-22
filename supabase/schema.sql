@@ -20,3 +20,5 @@ create table if not exists wa_transcript (
   content text not null,
   at timestamptz not null
 );
+
+grant all on wa_auth, wa_meta, wa_transcript to service_role;
