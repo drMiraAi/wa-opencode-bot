@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest"
 import { readFileSync } from "node:fs"
 
 describe("deploy assets", () => {
-  it("Dockerfile memakai Node 22", () => {
-    expect(readFileSync("Dockerfile", "utf8")).toContain("node:22")
+  it("Dockerfile memakai Node 24", () => {
+    expect(readFileSync("Dockerfile", "utf8")).toContain("node:24")
   })
 
   it("README mencantumkan semua env var wajib", () => {
