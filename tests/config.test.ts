@@ -18,6 +18,11 @@ describe("loadConfig", () => {
     expect(c.workDir).toBe("work")
   })
 
+  it("memecah daftar ALLOWED_JID yang dipisah koma", () => {
+    const c = loadConfig({ ...base, ALLOWED_JID: "62812@s.whatsapp.net, 243090988204144@lid" })
+    expect(c.allowedSenderJids).toEqual(["62812@s.whatsapp.net", "243090988204144@lid"])
+  })
+
   it("menolak env var yang hilang", () => {
     expect(() => loadConfig({ ...base, SUPABASE_KEY: "" })).toThrow("SUPABASE_KEY")
   })

@@ -2,6 +2,7 @@ export interface AppConfig {
   port: number
   allowedGroupJid: string
   allowedSenderJid: string
+  allowedSenderJids: string[]
   bootstrapToken: string
   supabaseUrl: string
   supabaseKey: string
@@ -34,7 +35,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   return {
     port,
     allowedGroupJid: env.ALLOWED_GROUP_JID!,
-    allowedSenderJid: env.ALLOWED_JID!,
+    allowedSenderJid: env.ALLOWED_JID!.split(",")[0]!.trim(),
+    allowedSenderJids: env.ALLOWED_JID!.split(",").map((jid) => jid.trim()).filter(Boolean),
     bootstrapToken: env.BOOTSTRAP_TOKEN!,
     supabaseUrl: env.SUPABASE_URL!,
     supabaseKey: env.SUPABASE_KEY!,

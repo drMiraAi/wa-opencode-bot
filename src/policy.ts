@@ -10,7 +10,7 @@ export function isAuthorized(
   msg: { chatJid: string; senderJid: string },
   config: AppConfig,
 ): boolean {
-  return msg.chatJid === config.allowedGroupJid && msg.senderJid === config.allowedSenderJid
+  return msg.chatJid === config.allowedGroupJid && config.allowedSenderJids.includes(msg.senderJid)
 }
 
 export function parseCommand(

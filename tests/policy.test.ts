@@ -5,11 +5,16 @@ import type { AppConfig } from "../src/config.js"
 const config = {
   allowedGroupJid: "1203630@g.us",
   allowedSenderJid: "62812@s.whatsapp.net",
+  allowedSenderJids: ["62812@s.whatsapp.net", "243090988204144@lid"],
 } as AppConfig
 
 describe("policy", () => {
   it("menerima grup dan pengirim yang benar", () => {
     expect(isAuthorized({ chatJid: "1203630@g.us", senderJid: "62812@s.whatsapp.net" }, config)).toBe(true)
+  })
+
+  it("menerima pengirim dalam bentuk LID", () => {
+    expect(isAuthorized({ chatJid: "1203630@g.us", senderJid: "243090988204144@lid" }, config)).toBe(true)
   })
 
   it("menolak pengirim lain di grup yang sama", () => {

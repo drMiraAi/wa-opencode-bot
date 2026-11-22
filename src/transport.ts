@@ -59,7 +59,10 @@ export async function routeMessage(deps: {
   send: (text: string) => Promise<void>
 }): Promise<void> {
   const { msg, config, agent, send } = deps
-  if (!isAuthorized(msg, config)) return
+  if (!isAuthorized(msg, config)) {
+    console.log(`Pesan diabaikan: chat=${msg.chatJid} sender=${msg.senderJid}`)
+    return
+  }
 
   const parsed = parseCommand(msg.text)
   if (parsed.kind === "command") {

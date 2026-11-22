@@ -8,6 +8,7 @@ import type { Agent } from "../src/agent.js"
 const config = {
   allowedGroupJid: "1203630@g.us",
   allowedSenderJid: "62812@s.whatsapp.net",
+  allowedSenderJids: ["62812@s.whatsapp.net", "243090988204144@lid"],
   bootstrapToken: "rahasia",
   port: 3000,
 } as AppConfig
