@@ -1,0 +1,37 @@
+name: WhatsApp OpenCode Bot
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: wa-opencode-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Jalankan bot
+        env:
+          PORT: "3000"
+          ALLOWED_GROUP_JID: ${{ secrets.ALLOWED_GROUP_JID }}
+          ALLOWED_JID: ${{ secrets.ALLOWED_JID }}
+          BOOTSTRAP_TOKEN: ${{ secrets.BOOTSTRAP_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node dist/index.js

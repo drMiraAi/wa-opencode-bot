@@ -3,3 +3,4 @@ dist/
 .env
 .superpowers/
 wa-qr.png
+.set-secrets.mjs
