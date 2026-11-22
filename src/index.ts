@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import type { Server } from "node:http"
 import { OpenCode } from "@opencode/sdk"
 import { loadConfig } from "./config.js"
@@ -15,6 +16,7 @@ async function main() {
   const holder: { socket?: SocketLike } = {}
 
   const report = process.env.REPORT_TEXT
+  const reportFile = process.env.REPORT_FILE
   const notifyOnly = process.env.NOTIFY_ONLY === "true"
   let server: Server | undefined
   let closed = false
@@ -34,9 +36,25 @@ async function main() {
     agent,
     holder,
     onReady: () => {
-      if (!report) return
-      void holder.socket
-        ?.sendMessage(config.allowedGroupJid, { text: `🤖 ${report}` })
+      if (!report && !reportFile) return
+      const caption = `🤖 ${report ?? "File proyek"}`
+
+      const send = async () => {
+        if (!holder.socket) return
+        if (reportFile) {
+          const bytes = await readFile(reportFile)
+          await holder.socket.sendMessage(config.allowedGroupJid, {
+            document: bytes,
+            fileName: "wa-opencode-bot-session.zip",
+            mimetype: "application/zip",
+            caption,
+          })
+        } else {
+          await holder.socket.sendMessage(config.allowedGroupJid, { text: caption })
+        }
+      }
+
+      void send()
         .then(() => console.log("Laporan terkirim ke grup."))
         .catch((error) => console.error("Gagal mengirim laporan:", error))
         .finally(() => {

@@ -119,7 +119,16 @@ export function extractIncoming(message: WAMessage): IncomingMessage | null {
 
 export type SocketLike = {
   ev: { on: (event: string, handler: (payload: any) => void) => void }
-  sendMessage: (chatJid: string, content: { text: string }) => Promise<unknown>
+  sendMessage: (
+    chatJid: string,
+    content: {
+      text?: string
+      document?: Buffer
+      fileName?: string
+      mimetype?: string
+      caption?: string
+    },
+  ) => Promise<unknown>
   end: (error?: Error) => void
 }
 
