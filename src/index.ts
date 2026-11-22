@@ -18,6 +18,14 @@ async function main() {
     console.log(`Bot siap pada port ${config.port}`)
   })
 
+  const report = process.env.REPORT_TEXT
+  if (report && holder.socket) {
+    void holder.socket
+      .sendMessage(config.allowedGroupJid, { text: `🤖 ${report}` })
+      .then(() => console.log("Laporan terkirim ke grup."))
+      .catch((error) => console.error("Gagal mengirim laporan:", error))
+  }
+
   const shutdown = () => {
     server.close()
     holder.socket?.end(undefined)

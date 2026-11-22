@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:
+    inputs:
+      message:
+        description: "Pesan laporan yang dikirim ke grup WhatsApp"
+        required: false
+        type: string
 
 concurrency:
   group: wa-opencode-bot
@@ -34,4 +39,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          REPORT_TEXT: ${{ inputs.message }}
         run: node dist/index.js
