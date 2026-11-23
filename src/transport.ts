@@ -262,6 +262,7 @@ export async function startBot(deps: {
         agent,
         send: async (text) => {
           await socket.sendMessage(incoming.chatJid, { text: BOT_PREFIX + text })
+          console.log(`OUTGOING chat=${incoming.chatJid} text=${text.slice(0, 40)}`)
         },
       }).catch((error) => {
         console.error("routeMessage gagal:", error)
