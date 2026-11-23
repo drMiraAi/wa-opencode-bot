@@ -166,7 +166,11 @@ export async function startBot(deps: {
   socket.ev.on("messages.upsert", ({ messages }) => {
     for (const message of messages) {
       const incoming = extractIncoming(message)
-      if (!incoming || !shouldProcess(incoming.text)) continue
+      if (!incoming) continue
+      console.log(
+        `INCOMING chat=${incoming.chatJid} sender=${incoming.senderJid} fromMe=${message.key.fromMe} text=${incoming.text.slice(0, 40)}`,
+      )
+      if (!shouldProcess(incoming.text)) continue
       void routeMessage({
         msg: incoming,
         config,

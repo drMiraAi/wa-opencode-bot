@@ -67,6 +67,14 @@ async function main() {
     console.log(`Bot siap pada port ${config.port}`)
   })
 
+  const diagnoseMs = process.env.DIAGNOSE_MS ? Number(process.env.DIAGNOSE_MS) : 0
+  if (diagnoseMs > 0) {
+    setTimeout(() => {
+      shutdown()
+      process.exit(0)
+    }, diagnoseMs)
+  }
+
   process.on("SIGTERM", shutdown)
   process.on("SIGINT", shutdown)
 }

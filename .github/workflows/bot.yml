@@ -18,6 +18,11 @@ on:
         description: "URL file yang dikirim ke grup"
         required: false
         type: string
+      diagnose_ms:
+        description: "Berhenti setelah N milidetik (diagnostik)"
+        required: false
+        default: "0"
+        type: string
 
 concurrency:
   group: wa-opencode-bot
@@ -55,4 +60,5 @@ jobs:
           REPORT_TEXT: ${{ inputs.message }}
           NOTIFY_ONLY: ${{ inputs.notify_only }}
           REPORT_FILE: ${{ inputs.attachment_url != '' && 'report.zip' || '' }}
+          DIAGNOSE_MS: ${{ inputs.diagnose_ms }}
         run: node dist/index.js
