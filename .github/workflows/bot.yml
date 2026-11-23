@@ -81,7 +81,4 @@ jobs:
           FFMPEG_PATH: /usr/bin/ffmpeg
           WHISPER_PATH: ${{ runner.temp }}/whisper.cpp/build/bin/whisper-cli
           MODEL_PATH: ${{ runner.temp }}/ggml-base.bin
-          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          IG_USER_ID: ${{ secrets.IG_USER_ID }}
-          IG_GRAPH_VERSION: ${{ vars.IG_GRAPH_VERSION || 'v23.0' }}
         run: node dist/index.js

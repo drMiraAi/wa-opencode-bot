@@ -5,7 +5,7 @@ describe("matchPcCommand", () => {
   it("mengenali tiga alias perintah", () => {
     expect(matchPcCommand("/yt short")?.command).toBe("yt_short")
     expect(matchPcCommand("/ytvideo")?.command).toBe("yt_video")
-    expect(matchPcCommand("/IG REELS")?.command).toBe("ig_reels")
+    expect(matchPcCommand("/ig reels")).toBeNull()
   })
 
   it("mengambil argumen setelah perintah", () => {

@@ -12,9 +12,7 @@ import {
 } from "@whiskeysockets/baileys"
 import { createAuthState } from "./auth.js"
 import { renderShort } from "./cloud-render.js"
-import { publishReel } from "./ig-publish.js"
 import { dispatchPcCommand, matchPcCommand } from "./pc-commands.js"
-import { uploadMediaToRelease } from "./upload.js"
 import type { AppConfig } from "./config.js"
 import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
@@ -64,30 +62,12 @@ async function handleMediaMessage(deps: {
     })
     const result = await readFile(outputPath)
 
-    if (match.command === "ig_reels") {
-      const igToken = process.env.IG_ACCESS_TOKEN
-      const igUserId = process.env.IG_USER_ID
-      const ghToken = process.env.GITHUB_TOKEN
-      if (!igToken || !igUserId || !ghToken) {
-        await send("Kredensial Instagram/GitHub belum diset di bot.")
-      } else {
-        const videoUrl = await uploadMediaToRelease(result, "reel.mp4", ghToken)
-        const mediaId = await publishReel({
-          videoUrl,
-          caption: match.args || "Video dari WhatsApp",
-          token: igToken,
-          igUserId,
-        })
-        await send(`Reel Instagram terpublish. ID: ${mediaId}`)
-      }
-    } else {
-      await socket.sendMessage(chatJid, {
-        document: result,
-        fileName: "short-output.mp4",
-        mimetype: "video/mp4",
-        caption: `${BOT_PREFIX}Selesai — ${match.command}`,
-      })
-    }
+    await socket.sendMessage(chatJid, {
+      document: result,
+      fileName: "short-output.mp4",
+      mimetype: "video/mp4",
+      caption: `${BOT_PREFIX}Selesai — ${match.command}`,
+    })
   } catch (error) {
     console.error("Gagal memproses video di cloud:", error)
     await send("Gagal memproses video di cloud.")
@@ -170,8 +150,7 @@ export async function routeMessage(deps: {
             "/reset — hapus riwayat\n" +
             "Kirim video + caption /yt short untuk diproses di cloud\n" +
             "/yt short <path> — jalankan di PC (jika runner aktif)\n" +
-            "/yt video <path> <thumb> — jalankan di PC\n" +
-            "/ig reels <path> — jalankan di PC",
+            "/yt video <path> <thumb> — jalankan di PC",
         )
         return
       case "status": {

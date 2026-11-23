@@ -1,4 +1,4 @@
-export type PcCommand = "yt_short" | "yt_video" | "ig_reels"
+export type PcCommand = "yt_short" | "yt_video"
 
 export type PcCommandMatch = {
   command: PcCommand
@@ -10,8 +10,6 @@ const aliases: Record<string, PcCommand> = {
   "/ytshort": "yt_short",
   "/yt video": "yt_video",
   "/ytvideo": "yt_video",
-  "/ig reels": "ig_reels",
-  "/igreels": "ig_reels",
 }
 
 export function matchPcCommand(text: string): PcCommandMatch | null {

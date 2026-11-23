@@ -10,7 +10,6 @@ on:
         options:
           - yt_short
           - yt_video
-          - ig_reels
           - ping
       args:
         description: "Argumen path video / thumbnail"
@@ -46,4 +45,3 @@ jobs:
           )
           if "%CMD%"=="yt_short" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Short.bat" %VIDEO_ARG% %ARGS%
           if "%CMD%"=="yt_video" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Video.bat" %VIDEO_ARG% %ARGS%
-          if "%CMD%"=="ig_reels" echo. | call "C:\Users\User\Documents\Default Project\instagram-reels\IG Reels.bat" %VIDEO_ARG% %ARGS%
