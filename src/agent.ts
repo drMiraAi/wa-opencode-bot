@@ -26,6 +26,10 @@ export interface Agent {
   status(): Promise<{ sessionId: string | null; model: string }>
 }
 
+export function formatStatusReport(status: { sessionId: string | null; model: string }): string {
+  return `Laporan otomatis: bot aktif | model ${status.model} | session ${status.sessionId ?? "-"}`
+}
+
 const QUOTA_REPLY = "Kuota gratis OpenRouter habis. Coba lagi besok."
 const IDLE_TIMEOUT_MS = 120_000
 

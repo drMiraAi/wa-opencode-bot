@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { createAgent } from "../src/agent.js"
+import { createAgent, formatStatusReport } from "../src/agent.js"
 import { createMemoryStore } from "../src/store.js"
 import type { AppConfig } from "../src/config.js"
 
@@ -26,6 +26,14 @@ function fakeSdk(assistantText = "jawaban") {
     },
   }
 }
+
+describe("formatStatusReport", () => {
+  it("menampilkan model dan session", () => {
+    expect(formatStatusReport({ sessionId: "ses_1", model: "openrouter/free-router" })).toBe(
+      "Laporan otomatis: bot aktif | model openrouter/free-router | session ses_1",
+    )
+  })
+})
 
 describe("agent", () => {
   it("membuat session dan menyuntik transkrip pada pemakaian pertama", async () => {
