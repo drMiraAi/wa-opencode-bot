@@ -22,7 +22,7 @@ async function main() {
   let statusTimer: ReturnType<typeof setInterval> | undefined
   const reportIntervalMs = process.env.REPORT_INTERVAL_MS
     ? Number(process.env.REPORT_INTERVAL_MS)
-    : 300_000
+    : 0
   let closed = false
 
   const shutdown = () => {
