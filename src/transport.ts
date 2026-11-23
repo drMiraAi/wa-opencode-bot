@@ -3,11 +3,13 @@ import QRCode from "qrcode"
 import {
   Browsers,
   DisconnectReason,
+  downloadMediaMessage,
   makeWASocket,
   type WAMessage,
 } from "@whiskeysockets/baileys"
 import { createAuthState } from "./auth.js"
 import { dispatchPcCommand, matchPcCommand } from "./pc-commands.js"
+import { uploadMediaToRelease } from "./upload.js"
 import type { AppConfig } from "./config.js"
 import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
@@ -16,6 +18,50 @@ import type { Store } from "./store.js"
 const activeSenders = new Set<string>()
 
 export const BOT_PREFIX = "🤖 "
+
+async function handleMediaMessage(deps: {
+  message: WAMessage
+  config: AppConfig
+  socket: SocketLike
+}): Promise<boolean> {
+  const { message, config, socket } = deps
+  const caption =
+    message.message?.videoMessage?.caption ?? message.message?.documentMessage?.caption ?? ""
+  const match = matchPcCommand(caption)
+  if (!match) return false
+
+  const chatJid = message.key.remoteJid ?? ""
+  const key = message.key as { participant?: string; participantPn?: string }
+  const senderJid = chatJid.endsWith("@g.us")
+    ? key.participantPn ?? key.participant ?? ""
+    : chatJid
+  if (
+    chatJid !== config.allowedGroupJid ||
+    !config.allowedSenderJids.includes(senderJid)
+  ) {
+    return false
+  }
+
+  const send = (text: string) => socket.sendMessage(chatJid, { text: `${BOT_PREFIX}${text}` })
+  const token = process.env.GITHUB_TOKEN
+  if (!token) {
+    await send("GITHUB_TOKEN belum tersedia di bot.")
+    return true
+  }
+
+  try {
+    await send("Video diterima, mengunggah...")
+    const downloaded = await downloadMediaMessage(message, "buffer", {})
+    const bytes = Buffer.from(downloaded as Uint8Array)
+    const url = await uploadMediaToRelease(bytes, "video.mp4", token)
+    await dispatchPcCommand(match.command, token, match.args, url)
+    await send(`Video diunggah. Perintah ${match.command} dikirim ke PC.`)
+  } catch (error) {
+    console.error("Gagal memproses video:", error)
+    await send("Gagal memproses video dari WhatsApp.")
+  }
+  return true
+}
 
 export function shouldProcess(text: string): boolean {
   return !text.startsWith(BOT_PREFIX)
@@ -73,8 +119,8 @@ export async function routeMessage(deps: {
       return
     }
     try {
-      await dispatchPcCommand(pcCommand, token)
-      await send(`Perintah ${pcCommand} dikirim ke PC. Pastikan runner menyala.`)
+      await dispatchPcCommand(pcCommand.command, token, pcCommand.args)
+      await send(`Perintah ${pcCommand.command} dikirim ke PC. Pastikan runner menyala.`)
     } catch {
       await send("Gagal mengirim perintah ke PC.")
     }
@@ -90,9 +136,9 @@ export async function routeMessage(deps: {
             "/status — status bot\n" +
             "/model — model LLM\n" +
             "/reset — hapus riwayat\n" +
-            "/yt short — jalankan YT Short.bat\n" +
-            "/yt video — jalankan YT Video.bat\n" +
-            "/ig reels — jalankan IG Reels.bat",
+            "/yt short <path video> — jalankan YT Short.bat\n" +
+            "/yt video <path video> <path thumb> — jalankan YT Video.bat\n" +
+            "/ig reels <path video> — jalankan IG Reels.bat",
         )
         return
       case "status": {
@@ -188,8 +234,10 @@ export async function startBot(deps: {
 
   socket.ev.on("creds.update", persist)
 
-  socket.ev.on("messages.upsert", ({ messages }) => {
+  socket.ev.on("messages.upsert", async ({ messages }) => {
     for (const message of messages) {
+      const handledMedia = await handleMediaMessage({ message, config, socket })
+      if (handledMedia) continue
       const incoming = extractIncoming(message)
       if (!incoming) continue
       console.log(

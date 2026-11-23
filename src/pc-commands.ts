@@ -1,5 +1,10 @@
 export type PcCommand = "yt_short" | "yt_video" | "ig_reels"
 
+export type PcCommandMatch = {
+  command: PcCommand
+  args: string
+}
+
 const aliases: Record<string, PcCommand> = {
   "/yt short": "yt_short",
   "/ytshort": "yt_short",
@@ -9,12 +14,25 @@ const aliases: Record<string, PcCommand> = {
   "/igreels": "ig_reels",
 }
 
-export function matchPcCommand(text: string): PcCommand | null {
-  const normalized = text.trim().toLowerCase().replace(/\s+/g, " ")
-  return aliases[normalized] ?? null
+export function matchPcCommand(text: string): PcCommandMatch | null {
+  const normalized = text.trim().replace(/\s+/g, " ")
+  const lower = normalized.toLowerCase()
+
+  for (const [alias, command] of Object.entries(aliases)) {
+    if (lower === alias) return { command, args: "" }
+    if (lower.startsWith(`${alias} `)) {
+      return { command, args: normalized.slice(alias.length).trim() }
+    }
+  }
+  return null
 }
 
-export async function dispatchPcCommand(command: PcCommand, token: string): Promise<void> {
+export async function dispatchPcCommand(
+  command: PcCommand,
+  token: string,
+  args = "",
+  videoUrl = "",
+): Promise<void> {
   const response = await fetch(
     "https://api.github.com/repos/drMiraAi/wa-opencode-bot/actions/workflows/pc-commands.yml/dispatches",
     {
@@ -26,7 +44,10 @@ export async function dispatchPcCommand(command: PcCommand, token: string): Prom
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "wa-opencode-bot",
       },
-      body: JSON.stringify({ ref: "feat/wa-opencode-bot", inputs: { command } }),
+      body: JSON.stringify({
+        ref: "feat/wa-opencode-bot",
+        inputs: { command, args, video_url: videoUrl },
+      }),
     },
   )
   if (response.status !== 204 && response.status !== 201) {

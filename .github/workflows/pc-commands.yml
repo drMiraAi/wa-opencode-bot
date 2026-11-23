@@ -12,6 +12,16 @@ on:
           - yt_video
           - ig_reels
           - ping
+      args:
+        description: "Argumen path video / thumbnail"
+        required: false
+        default: ""
+        type: string
+      video_url:
+        description: "URL video dari WhatsApp"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   run:
@@ -26,7 +36,14 @@ jobs:
         shell: cmd
         env:
           CMD: ${{ inputs.command }}
+          ARGS: ${{ inputs.args }}
+          VIDEO_URL: ${{ inputs.video_url }}
         run: |
-          if "%CMD%"=="yt_short" "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Short.bat"
-          if "%CMD%"=="yt_video" "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Video.bat"
-          if "%CMD%"=="ig_reels" "C:\Users\User\Documents\Default Project\instagram-reels\IG Reels.bat"
+          set "VIDEO_ARG="
+          if not "%VIDEO_URL%"=="" (
+            curl -fsSL "%VIDEO_URL%" -o "%TEMP%\wa-video.mp4"
+            set "VIDEO_ARG="%TEMP%\wa-video.mp4""
+          )
+          if "%CMD%"=="yt_short" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Short.bat" %VIDEO_ARG% %ARGS%
+          if "%CMD%"=="yt_video" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Video.bat" %VIDEO_ARG% %ARGS%
+          if "%CMD%"=="ig_reels" echo. | call "C:\Users\User\Documents\Default Project\instagram-reels\IG Reels.bat" %VIDEO_ARG% %ARGS%
