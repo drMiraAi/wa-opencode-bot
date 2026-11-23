@@ -44,6 +44,18 @@ jobs:
           node-version: "24"
           cache: npm
 
+      - name: Instal ffmpeg dan build tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg cmake build-essential
+
+      - name: Build whisper.cpp
+        run: |
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git "$RUNNER_TEMP/whisper.cpp"
+          cmake -S "$RUNNER_TEMP/whisper.cpp" -B "$RUNNER_TEMP/whisper.cpp/build" -DWHISPER_BUILD_EXAMPLES=ON
+          cmake --build "$RUNNER_TEMP/whisper.cpp/build" -j2
+
+      - name: Unduh model whisper
+        run: curl -fsSL "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -o "$RUNNER_TEMP/ggml-base.bin"
+
       - run: npm ci
 
       - run: npm run build
@@ -66,4 +78,7 @@ jobs:
           REPORT_FILE: ${{ inputs.attachment_url != '' && 'report.zip' || '' }}
           DIAGNOSE_MS: ${{ inputs.diagnose_ms }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FFMPEG_PATH: /usr/bin/ffmpeg
+          WHISPER_PATH: ${{ runner.temp }}/whisper.cpp/build/bin/whisper-cli
+          MODEL_PATH: ${{ runner.temp }}/ggml-base.bin
         run: node dist/index.js

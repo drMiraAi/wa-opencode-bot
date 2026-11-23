@@ -1,3 +1,6 @@
+import { mkdtemp, readFile, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import express, { type Express } from "express"
 import QRCode from "qrcode"
 import {
@@ -8,8 +11,8 @@ import {
   type WAMessage,
 } from "@whiskeysockets/baileys"
 import { createAuthState } from "./auth.js"
+import { renderShort } from "./cloud-render.js"
 import { dispatchPcCommand, matchPcCommand } from "./pc-commands.js"
-import { uploadMediaToRelease } from "./upload.js"
 import type { AppConfig } from "./config.js"
 import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
@@ -43,22 +46,31 @@ async function handleMediaMessage(deps: {
   }
 
   const send = (text: string) => socket.sendMessage(chatJid, { text: `${BOT_PREFIX}${text}` })
-  const token = process.env.GITHUB_TOKEN
-  if (!token) {
-    await send("GITHUB_TOKEN belum tersedia di bot.")
-    return true
-  }
 
   try {
-    await send("Video diterima, mengunggah...")
+    await send("Video diterima. Memproses di cloud...")
     const downloaded = await downloadMediaMessage(message, "buffer", {})
     const bytes = Buffer.from(downloaded as Uint8Array)
-    const url = await uploadMediaToRelease(bytes, "video.mp4", token)
-    await dispatchPcCommand(match.command, token, match.args, url)
-    await send(`Video diunggah. Perintah ${match.command} dikirim ke PC.`)
+    const workDir = await mkdtemp(join(tmpdir(), "wa-render-"))
+    const inputPath = join(workDir, "input.mp4")
+    await writeFile(inputPath, bytes)
+
+    const outputPath = await renderShort(inputPath, workDir, {
+      ffmpeg: process.env.FFMPEG_PATH || "ffmpeg",
+      whisper: process.env.WHISPER_PATH || "whisper-cli",
+      model: process.env.MODEL_PATH || "ggml-base.bin",
+    })
+    const result = await readFile(outputPath)
+
+    await socket.sendMessage(chatJid, {
+      document: result,
+      fileName: "short-output.mp4",
+      mimetype: "video/mp4",
+      caption: `${BOT_PREFIX}Selesai — ${match.command}`,
+    })
   } catch (error) {
-    console.error("Gagal memproses video:", error)
-    await send("Gagal memproses video dari WhatsApp.")
+    console.error("Gagal memproses video di cloud:", error)
+    await send("Gagal memproses video di cloud.")
   }
   return true
 }
@@ -136,9 +148,10 @@ export async function routeMessage(deps: {
             "/status — status bot\n" +
             "/model — model LLM\n" +
             "/reset — hapus riwayat\n" +
-            "/yt short <path video> — jalankan YT Short.bat\n" +
-            "/yt video <path video> <path thumb> — jalankan YT Video.bat\n" +
-            "/ig reels <path video> — jalankan IG Reels.bat",
+            "Kirim video + caption /yt short untuk diproses di cloud\n" +
+            "/yt short <path> — jalankan di PC (jika runner aktif)\n" +
+            "/yt video <path> <thumb> — jalankan di PC\n" +
+            "/ig reels <path> — jalankan di PC",
         )
         return
       case "status": {
