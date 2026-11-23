@@ -1,0 +1,26 @@
+name: PC Commands
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Perintah yang dijalankan di PC"
+        required: true
+        type: choice
+        options:
+          - yt_short
+          - yt_video
+          - ig_reels
+
+jobs:
+  run:
+    runs-on: self-hosted
+    steps:
+      - name: Jalankan file .bat
+        shell: cmd
+        env:
+          CMD: ${{ inputs.command }}
+        run: |
+          if "%CMD%"=="yt_short" "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Short.bat"
+          if "%CMD%"=="yt_video" "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Video.bat"
+          if "%CMD%"=="ig_reels" "C:\Users\User\Documents\Default Project\instagram-reels\IG Reels.bat"

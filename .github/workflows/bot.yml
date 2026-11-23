@@ -24,6 +24,10 @@ on:
         default: "0"
         type: string
 
+permissions:
+  actions: write
+  contents: read
+
 concurrency:
   group: wa-opencode-bot
   cancel-in-progress: false
@@ -61,4 +65,5 @@ jobs:
           NOTIFY_ONLY: ${{ inputs.notify_only }}
           REPORT_FILE: ${{ inputs.attachment_url != '' && 'report.zip' || '' }}
           DIAGNOSE_MS: ${{ inputs.diagnose_ms }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node dist/index.js

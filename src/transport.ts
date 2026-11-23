@@ -7,6 +7,7 @@ import {
   type WAMessage,
 } from "@whiskeysockets/baileys"
 import { createAuthState } from "./auth.js"
+import { dispatchPcCommand, matchPcCommand } from "./pc-commands.js"
 import type { AppConfig } from "./config.js"
 import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
@@ -64,11 +65,35 @@ export async function routeMessage(deps: {
     return
   }
 
+  const pcCommand = matchPcCommand(msg.text)
+  if (pcCommand) {
+    const token = process.env.GITHUB_TOKEN
+    if (!token) {
+      await send("GITHUB_TOKEN belum tersedia di bot.")
+      return
+    }
+    try {
+      await dispatchPcCommand(pcCommand, token)
+      await send(`Perintah ${pcCommand} dikirim ke PC. Pastikan runner menyala.`)
+    } catch {
+      await send("Gagal mengirim perintah ke PC.")
+    }
+    return
+  }
+
   const parsed = parseCommand(msg.text)
   if (parsed.kind === "command") {
     switch (parsed.name) {
       case "help":
-        await send("/help — daftar perintah\n/status — status bot\n/model — model LLM\n/reset — hapus riwayat")
+        await send(
+          "/help — daftar perintah\n" +
+            "/status — status bot\n" +
+            "/model — model LLM\n" +
+            "/reset — hapus riwayat\n" +
+            "/yt short — jalankan YT Short.bat\n" +
+            "/yt video — jalankan YT Video.bat\n" +
+            "/ig reels — jalankan IG Reels.bat",
+        )
         return
       case "status": {
         const status = await agent.status()
