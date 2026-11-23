@@ -66,8 +66,6 @@ export async function renderShort(
   await run(settings.ffmpeg, buildCropArgs(inputPath, cropped))
   await run(settings.ffmpeg, ["-y", "-i", cropped, "-vn", "-ac", "1", "-ar", "16000", audio])
   await run(settings.whisper, buildWhisperArgs(audio, settings.model, srt))
-  await writeFile(srt, toSrt([]), { flag: "a" }).catch(() => undefined)
-
   const srtFile = join(workDir, "subtitle.json")
   const raw = await import("node:fs/promises").then((fs) => fs.readFile(srtFile, "utf8")).catch(() => "[]")
   let segments: Array<{ from: string; to: string; text: string }> = []
@@ -80,6 +78,11 @@ export async function renderShort(
   } catch {
     segments = []
   }
+  if (segments.length === 0) {
+    await run(settings.ffmpeg, ["-y", "-i", cropped, "-c", "copy", output])
+    return output
+  }
+
   await writeFile(srt, toSrt(segments))
 
   await run(settings.ffmpeg, [
@@ -87,7 +90,7 @@ export async function renderShort(
     "-i",
     cropped,
     "-vf",
-    `subtitles=${srt}:force_style='FontSize=28,Alignment=2,MarginV=80'`,
+    `subtitles=filename=${srt}:force_style='FontSize=28,Alignment=2,MarginV=80'`,
     "-c:v",
     "libx264",
     "-preset",
