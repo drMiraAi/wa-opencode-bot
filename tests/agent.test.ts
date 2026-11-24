@@ -89,6 +89,23 @@ describe("agent", () => {
     expect(sdk.sessions.create).not.toHaveBeenCalled()
   })
 
+  it("memilih jawaban asisten terbaru dari message.list", async () => {
+    const store = createMemoryStore()
+    await store.saveSessionId("ses_lama")
+    const sdk = fakeSdk()
+    sdk.message.list.mockResolvedValueOnce({
+      data: [
+        { type: "user", content: [{ type: "text", text: "pertanyaan baru" }] },
+        { type: "assistant", content: [{ type: "text", text: "JAWABAN BARU" }] },
+        { type: "user", content: [{ type: "text", text: "pertanyaan lama" }] },
+        { type: "assistant", content: [{ type: "text", text: "JAWABAN LAMA" }] },
+      ],
+    })
+    const agent = await createAgent({ sdk: sdk as never, store, config })
+
+    expect(await agent.prompt("pertanyaan baru")).toBe("JAWABAN BARU")
+  })
+
   it("mengosongkan transkrip saat reset", async () => {
     const store = createMemoryStore()
     await store.appendTranscript([{ role: "user", content: "lama", at: "2026-11-22T00:00:00Z" }])

@@ -108,7 +108,7 @@ export async function createAgent(deps: {
         ])
 
         const { data } = await sdk.message.list({ sessionID: sessionId })
-        const assistant = [...data].reverse().find((message) => message.type === "assistant")
+        const assistant = data.find((message) => message.type === "assistant")
         const answer = (assistant?.content ?? [])
           .filter((part) => part.type === "text")
           .map((part) => part.text ?? "")
