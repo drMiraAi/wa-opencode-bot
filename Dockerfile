@@ -9,6 +9,7 @@ COPY tsconfig.json ./
 COPY tsconfig.build.json ./
 COPY work ./work
 COPY src ./src
+COPY context ./context
 
 RUN npm run build && npm prune --omit=dev
 

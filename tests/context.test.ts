@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises"
+import { mkdtemp, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, it, expect } from "vitest"
@@ -60,5 +60,12 @@ describe("loadContextPacks", () => {
   it("gagal jelas bila file context hilang", async () => {
     const dir = await mkdtemp(join(tmpdir(), "wa-context-"))
     await expect(loadContextPacks(dir)).rejects.toThrow(/context/)
+  })
+})
+
+describe("Dockerfile", () => {
+  it("menyalin direktori context ke image", async () => {
+    const dockerfile = await readFile(new URL("../Dockerfile", import.meta.url), "utf8")
+    expect(dockerfile).toMatch(/^COPY context \.\/context$/m)
   })
 })
