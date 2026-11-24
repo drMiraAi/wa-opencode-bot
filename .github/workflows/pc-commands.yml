@@ -1,0 +1,47 @@
+name: PC Commands
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Perintah yang dijalankan di PC"
+        required: true
+        type: choice
+        options:
+          - yt_short
+          - yt_video
+          - ping
+      args:
+        description: "Argumen path video / thumbnail"
+        required: false
+        default: ""
+        type: string
+      video_url:
+        description: "URL video dari WhatsApp"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  run:
+    runs-on: self-hosted
+    steps:
+      - name: Ping
+        if: ${{ inputs.command == 'ping' }}
+        shell: cmd
+        run: echo RUNNER_OK
+
+      - name: Jalankan file .bat
+        shell: cmd
+        env:
+          CMD: ${{ inputs.command }}
+          ARGS: ${{ inputs.args }}
+          VIDEO_URL: ${{ inputs.video_url }}
+        run: |
+          set "VIDEO_ARG="
+          if not "%VIDEO_URL%"=="" (
+            curl -fsSL "%VIDEO_URL%" -o "%TEMP%\wa-video.mp4"
+            set "VIDEO_ARG="%TEMP%\wa-video.mp4""
+          )
+          if "%CMD%"=="yt_short" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Short.bat" %VIDEO_ARG% %ARGS%
+          if "%CMD%"=="yt_video" echo. | call "C:\Users\User\Documents\Default Project\youtube-arsitektur\YT Video.bat" %VIDEO_ARG% %ARGS%

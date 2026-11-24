@@ -1,0 +1,82 @@
+name: WhatsApp OpenCode Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Pesan laporan yang dikirim ke grup WhatsApp"
+        required: false
+        type: string
+      notify_only:
+        description: "Kirim pesan lalu selesai (tanpa menjalankan bot)"
+        required: false
+        default: false
+        type: boolean
+      attachment_url:
+        description: "URL file yang dikirim ke grup"
+        required: false
+        type: string
+      diagnose_ms:
+        description: "Berhenti setelah N milidetik (diagnostik)"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: wa-opencode-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Instal ffmpeg dan build tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg cmake build-essential
+
+      - name: Build whisper.cpp
+        run: |
+          git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git "$RUNNER_TEMP/whisper.cpp"
+          cmake -S "$RUNNER_TEMP/whisper.cpp" -B "$RUNNER_TEMP/whisper.cpp/build" -DWHISPER_BUILD_EXAMPLES=ON
+          cmake --build "$RUNNER_TEMP/whisper.cpp/build" -j2
+
+      - name: Unduh model whisper
+        run: curl -fsSL "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -o "$RUNNER_TEMP/ggml-base.bin"
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Unduh lampiran
+        if: ${{ inputs.attachment_url != '' }}
+        run: curl -fsSL "${{ inputs.attachment_url }}" -o report.zip
+
+      - name: Jalankan bot
+        env:
+          PORT: "3000"
+          ALLOWED_GROUP_JID: ${{ secrets.ALLOWED_GROUP_JID }}
+          ALLOWED_JID: ${{ secrets.ALLOWED_JID }}
+          BOOTSTRAP_TOKEN: ${{ secrets.BOOTSTRAP_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          REPORT_TEXT: ${{ inputs.message }}
+          NOTIFY_ONLY: ${{ inputs.notify_only }}
+          REPORT_FILE: ${{ inputs.attachment_url != '' && 'report.zip' || '' }}
+          DIAGNOSE_MS: ${{ inputs.diagnose_ms }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FFMPEG_PATH: /usr/bin/ffmpeg
+          WHISPER_PATH: ${{ runner.temp }}/whisper.cpp/build/bin/whisper-cli
+          MODEL_PATH: ${{ runner.temp }}/ggml-base.bin
+        run: node dist/index.js
