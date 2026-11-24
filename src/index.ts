@@ -4,6 +4,7 @@ import { OpenCode } from "@opencode/sdk"
 import { loadConfig } from "./config.js"
 import { createSupabaseStore } from "./store.js"
 import { createAgent, formatStatusReport } from "./agent.js"
+import { buildDocumentMessage } from "./report.js"
 import { startBot, type SocketLike } from "./transport.js"
 
 async function main() {
@@ -62,12 +63,10 @@ async function main() {
         if (!holder.socket) return
         if (reportFile) {
           const bytes = await readFile(reportFile)
-          await holder.socket.sendMessage(config.allowedGroupJid, {
-            document: bytes,
-            fileName: "wa-opencode-bot-session.zip",
-            mimetype: "application/zip",
-            caption,
-          })
+          await holder.socket.sendMessage(
+            config.allowedGroupJid,
+            buildDocumentMessage(reportFile, bytes, caption),
+          )
         } else {
           await holder.socket.sendMessage(config.allowedGroupJid, { text: caption })
         }
