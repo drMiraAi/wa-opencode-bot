@@ -26,7 +26,7 @@ describe("dispatchPcCommand", () => {
   })
 
   it("mengirim workflow_dispatch dengan command dan args", async () => {
-    const fetchMock = vi.fn(async () => ({ status: 204 }))
+    const fetchMock = vi.fn(async (_url: string, _init?: { body?: string }) => ({ status: 204 }))
     vi.stubGlobal("fetch", fetchMock)
 
     await dispatchPcCommand("yt_short", "token", '"C:\\video.mp4"')

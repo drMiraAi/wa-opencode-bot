@@ -148,6 +148,7 @@ export async function routeMessage(deps: {
             "/status — status bot\n" +
             "/model — model LLM\n" +
             "/reset — hapus riwayat\n" +
+            "Balasan memakai persona master dan skill teks cloud (tanpa akses PC).\n" +
             "Kirim video + caption /yt short untuk diproses di cloud\n" +
             "/yt short <path> — jalankan di PC (jika runner aktif)\n" +
             "/yt video <path> <thumb> — jalankan di PC",

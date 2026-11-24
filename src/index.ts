@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises"
 import type { Server } from "node:http"
+import { fileURLToPath } from "node:url"
 import { OpenCode } from "@opencode/sdk"
 import { loadConfig } from "./config.js"
+import { loadContextPacks } from "./context.js"
 import { createSupabaseStore } from "./store.js"
 import { createAgent, formatStatusReport } from "./agent.js"
 import { buildDocumentMessage } from "./report.js"
@@ -13,7 +15,10 @@ async function main() {
 
   const store = createSupabaseStore(config)
   const sdk = await OpenCode.create()
-  const agent = await createAgent({ sdk: sdk as never, store, config })
+  const context = await loadContextPacks(
+    fileURLToPath(new URL("../context/", import.meta.url)),
+  )
+  const agent = await createAgent({ sdk: sdk as never, store, config, context })
   const holder: { socket?: SocketLike } = {}
 
   const report = process.env.REPORT_TEXT

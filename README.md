@@ -75,6 +75,10 @@ Tanpa keepalive, bot akan mati dan pesan tidak dibangunkan oleh WhatsApp.
 
 Pesan selain perintah diteruskan ke agen OpenCode. Balasan bot diawali `🤖`.
 
+## Persona balasan
+
+Bot menjawab dengan sapaan **master**, bahasa Indonesia formal, dan gaya ringkas tanpa basa-basi. Persona dan aturan dimuat dari direktori `context/` saat bot dimulai. Skill teks cloud dipilih otomatis dari isi pesan; skill yang membutuhkan `ffmpeg`, `browser`, `see`, `blender`, atau `winapp-*` tidak dijalankan di cloud. Bot tidak memiliki akses ke PC master. `/reset` memasang kembali persona pada sesi berikutnya.
+
 ## Kuota dan risiko
 
 - OpenRouter model gratis: **50 request/hari** tanpa pembelian kredit. Jika habis, bot membalas pesan kuota.

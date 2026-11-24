@@ -139,4 +139,16 @@ describe("routeMessage", () => {
     })
     expect(send).toHaveBeenCalledTimes(3)
   })
+
+  it("/help menjelaskan persona dan batas cloud", async () => {
+    const send = vi.fn(async (_text: string) => {})
+    const agent = { prompt: vi.fn(async () => "jawaban") } as unknown as Agent
+    await routeMessage({
+      msg: { chatJid: "1203630@g.us", senderJid: "62812@s.whatsapp.net", text: "/help" },
+      config,
+      agent,
+      send,
+    })
+    expect(send.mock.calls[0][0]).toContain("persona master dan skill teks cloud")
+  })
 })
