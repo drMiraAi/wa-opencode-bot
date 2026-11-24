@@ -1,3 +1,5 @@
+import { resolve } from "node:path"
+
 export interface AppConfig {
   port: number
   allowedGroupJid: string
@@ -42,6 +44,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     supabaseKey: env.SUPABASE_KEY!,
     openrouterApiKey: env.OPENROUTER_API_KEY!,
     model: env.MODEL || "openrouter/free-router",
-    workDir: env.WORK_DIR || "work",
+    workDir: resolve(env.WORK_DIR || "work"),
   }
 }

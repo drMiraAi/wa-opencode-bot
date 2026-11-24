@@ -1,3 +1,4 @@
+import { resolve } from "node:path"
 import { describe, it, expect } from "vitest"
 import { loadConfig } from "../src/config.js"
 
@@ -15,7 +16,12 @@ describe("loadConfig", () => {
     const c = loadConfig(base)
     expect(c.port).toBe(3000)
     expect(c.model).toBe("openrouter/free-router")
-    expect(c.workDir).toBe("work")
+    expect(c.workDir).toBe(resolve("work"))
+  })
+
+  it("mengubah WORK_DIR menjadi path absolut", () => {
+    const c = loadConfig({ ...base, WORK_DIR: "work" })
+    expect(c.workDir).toBe(resolve("work"))
   })
 
   it("memecah daftar ALLOWED_JID yang dipisah koma", () => {
