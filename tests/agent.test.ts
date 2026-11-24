@@ -23,11 +23,12 @@ function fakeSdk(assistantText = "jawaban") {
       })),
     },
     events: {
-      subscribe: () =>
+      subscribe: vi.fn((_input: { types: string[] }) =>
         (async function* () {
-          yield { type: "session.idle", data: { sessionID: "ses_baru" } }
-          yield { type: "session.idle", data: { sessionID: "ses_lama" } }
+          yield { type: "session.execution.succeeded", data: { sessionID: "ses_baru" } }
+          yield { type: "session.execution.succeeded", data: { sessionID: "ses_lama" } }
         })(),
+      ),
     },
   }
 }
@@ -120,29 +121,40 @@ describe("agent", () => {
     let closed = false
     const sdk = fakeSdk()
     sdk.message.list.mockRejectedValueOnce(new Error("429 quota exceeded"))
-    sdk.events.subscribe = () =>
+    sdk.events.subscribe = vi.fn((_input: { types: string[] }) =>
       (async function* () {
         try {
-          yield { type: "session.idle", data: { sessionID: "ses_baru" } }
+          yield { type: "session.execution.succeeded", data: { sessionID: "ses_baru" } }
         } finally {
           closed = true
         }
-      })()
+      })(),
+    )
     const agent = await createAgent({ sdk: sdk as never, store: createMemoryStore(), config })
 
     expect(await agent.prompt("halo")).toContain("Kuota")
     expect(closed).toBe(true)
   })
 
-  it("tetap menjawab bila event idle tidak pernah muncul", async () => {
+  it("berlangganan event eksekusi session agar balasan tidak menunggu timeout", async () => {
     const sdk = fakeSdk()
-    sdk.events.subscribe = () =>
+    const agent = await createAgent({ sdk: sdk as never, store: createMemoryStore(), config })
+    await agent.prompt("halo")
+    expect(sdk.events.subscribe).toHaveBeenCalledWith({
+      types: ["session.execution.succeeded", "session.execution.failed"],
+    })
+  })
+
+  it("tetap menjawab bila event eksekusi tidak pernah muncul", async () => {
+    const sdk = fakeSdk()
+    sdk.events.subscribe = vi.fn((_input: { types: string[] }) =>
       ({
         [Symbol.asyncIterator]: () => ({
           next: () => new Promise(() => {}),
           return: async () => ({ done: true, value: undefined }),
         }),
-      }) as never
+      }) as never,
+    )
     const agent = await createAgent({
       sdk: sdk as never,
       store: createMemoryStore(),

@@ -70,6 +70,7 @@ Skill yang butuh alat lokal (`ffmpeg`, `see`, `browser`, `winapp-*`, `blender`, 
 ## Perilaku balasan
 
 - Awalan pesan tetap `OP.BOT ` dari `BOT_PREFIX`. Balasan lama ber-awalan `🤖 ` tetap diabaikan agar tidak memicu balasan ulang.
+- Penunggu jawaban memakai `session.execution.succeeded`/`session.execution.failed`; `session.idle` tidak dipancarkan SDK saat ini dan menyebabkan balasan menunggu timeout 120 detik. Timeout tetap sebagai pengaman.
 - Pesan panjang dipecah `chunkText` seperti sekarang.
 - Perintah `/help`, `/status`, `/model`, `/reset` tetap dipertahankan.
 - `/help` ditambah penjelasan singkat: balasan memakai persona master dan skill teks cloud.

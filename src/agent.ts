@@ -33,6 +33,7 @@ export function formatStatusReport(status: { sessionId: string | null; model: st
 
 const QUOTA_REPLY = "Kuota gratis OpenRouter habis. Coba lagi besok."
 const IDLE_TIMEOUT_MS = 120_000
+const COMPLETION_EVENT_TYPES = ["session.execution.succeeded", "session.execution.failed"]
 
 function isQuotaError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
@@ -79,12 +80,17 @@ export async function createAgent(deps: {
         await store.saveSessionId(sessionId)
       }
 
-      const iterator = sdk.events.subscribe({ types: ["session.idle"] })[Symbol.asyncIterator]()
-      const idle = (async () => {
+      const iterator = sdk.events.subscribe({ types: COMPLETION_EVENT_TYPES })[Symbol.asyncIterator]()
+      const completed = (async () => {
         while (true) {
           const step = await iterator.next()
           if (step.done) return
-          if (step.value.type === "session.idle" && step.value.data?.sessionID === sessionId) return
+          if (
+            COMPLETION_EVENT_TYPES.includes(step.value.type) &&
+            step.value.data?.sessionID === sessionId
+          ) {
+            return
+          }
         }
       })()
 
@@ -95,7 +101,7 @@ export async function createAgent(deps: {
           : ""
         await sdk.sessions.prompt({ sessionID: sessionId, text: contextPrefix + prefix + text })
         await Promise.race([
-          idle,
+          completed,
           new Promise<void>((resolve) => {
             timer = setTimeout(resolve, timeout)
           }),
