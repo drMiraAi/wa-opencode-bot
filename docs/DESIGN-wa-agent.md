@@ -69,7 +69,7 @@ Skill yang butuh alat lokal (`ffmpeg`, `see`, `browser`, `winapp-*`, `blender`, 
 
 ## Perilaku balasan
 
-- Awalan pesan tetap `🤖 ` dari `BOT_PREFIX`.
+- Awalan pesan tetap `OP.BOT ` dari `BOT_PREFIX`. Balasan lama ber-awalan `🤖 ` tetap diabaikan agar tidak memicu balasan ulang.
 - Pesan panjang dipecah `chunkText` seperti sekarang.
 - Perintah `/help`, `/status`, `/model`, `/reset` tetap dipertahankan.
 - `/help` ditambah penjelasan singkat: balasan memakai persona master dan skill teks cloud.

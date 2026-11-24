@@ -15,7 +15,7 @@
 - Model tetap `openrouter/free-router`; jangan tambah API key atau model berbayar.
 - Jangan ubah `ALLOWED_GROUP_JID`, `ALLOWED_JID`, atau `isAuthorized`.
 - Tidak boleh menjanjikan atau memanggil file, shell, browser, atau tool PC master.
-- Balasan tetap diawali `🤖 ` (`BOT_PREFIX`) dan dipecah `chunkText` 3000 karakter.
+- Balasan tetap diawali `OP.BOT ` (`BOT_PREFIX`) dan dipecah `chunkText` 3000 karakter; balasan lama `🤖 ` tetap diabaikan.
 - Context pack maksimal ~2.000 token; satu skill card maksimal ~300 token.
 - Awalan context hanya untuk sesi baru; `/reset` adalah cara memasang ulang.
 - Gunakan gaya commit repo: `feat:`, `fix:`, `chore:`, `test:`, `docs:`.

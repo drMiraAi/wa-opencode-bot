@@ -7,7 +7,7 @@ import { loadContextPacks } from "./context.js"
 import { createSupabaseStore } from "./store.js"
 import { createAgent, formatStatusReport } from "./agent.js"
 import { buildDocumentMessage } from "./report.js"
-import { startBot, type SocketLike } from "./transport.js"
+import { BOT_PREFIX, startBot, type SocketLike } from "./transport.js"
 
 async function main() {
   const config = loadConfig(process.env)
@@ -53,7 +53,7 @@ async function main() {
             .status()
             .then((status) =>
               holder.socket?.sendMessage(config.allowedGroupJid, {
-                text: `🤖 ${formatStatusReport(status)}`,
+                text: `${BOT_PREFIX}${formatStatusReport(status)}`,
               }),
             )
             .catch((error) => console.error("Gagal kirim laporan berkala:", error))
@@ -62,7 +62,7 @@ async function main() {
       }
 
       if (!report && !reportFile) return
-      const caption = `🤖 ${report ?? "File proyek"}`
+      const caption = `${BOT_PREFIX}${report ?? "File proyek"}`
 
       const send = async () => {
         if (!holder.socket) return

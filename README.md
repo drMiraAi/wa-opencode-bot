@@ -73,7 +73,7 @@ Tanpa keepalive, bot akan mati dan pesan tidak dibangunkan oleh WhatsApp.
 | `/model` | Nama model LLM |
 | `/reset` | Hapus riwayat percakapan |
 
-Pesan selain perintah diteruskan ke agen OpenCode. Balasan bot diawali `🤖`.
+Pesan selain perintah diteruskan ke agen OpenCode. Balasan bot diawali `OP.BOT `.
 
 ## Persona balasan
 

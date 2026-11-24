@@ -8,11 +8,11 @@ describe("buildDocumentMessage", () => {
     const msg = buildDocumentMessage(
       "C:/parts/OpenCode-Portable.zip.part009",
       bytes,
-      "🤖 OpenCode Portable 9/17",
+      "OP.BOT OpenCode Portable 9/17",
     )
     expect(msg.fileName).toBe("OpenCode-Portable.zip.part009")
     expect(msg.document).toBe(bytes)
-    expect(msg.caption).toBe("🤖 OpenCode Portable 9/17")
+    expect(msg.caption).toBe("OP.BOT OpenCode Portable 9/17")
   })
 
   it("memilih mimetype sesuai ekstensi", () => {

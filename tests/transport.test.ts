@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import request from "supertest"
-import { createHttpApp, extractIncoming, routeMessage, shouldProcess, startBot, type SocketLike } from "../src/transport.js"
+import { BOT_PREFIX, createHttpApp, extractIncoming, routeMessage, shouldProcess, startBot, type SocketLike } from "../src/transport.js"
 import { createMemoryStore } from "../src/store.js"
 import type { AppConfig } from "../src/config.js"
 import type { Agent } from "../src/agent.js"
@@ -98,7 +98,15 @@ describe("shouldProcess", () => {
     expect(shouldProcess("/status")).toBe(true)
   })
 
+  it("memakai awalan OP.BOT untuk balasan bot", () => {
+    expect(BOT_PREFIX).toBe("OP.BOT ")
+  })
+
   it("menolak balasan bot sendiri", () => {
+    expect(shouldProcess("OP.BOT jawaban")).toBe(false)
+  })
+
+  it("tetap menolak balasan bot lama", () => {
     expect(shouldProcess("🤖 jawaban")).toBe(false)
   })
 })

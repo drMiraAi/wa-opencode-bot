@@ -20,7 +20,8 @@ import type { Store } from "./store.js"
 
 const activeSenders = new Set<string>()
 
-export const BOT_PREFIX = "🤖 "
+export const BOT_PREFIX = "OP.BOT "
+const LEGACY_BOT_PREFIX = "🤖 "
 
 async function handleMediaMessage(deps: {
   message: WAMessage
@@ -76,7 +77,7 @@ async function handleMediaMessage(deps: {
 }
 
 export function shouldProcess(text: string): boolean {
-  return !text.startsWith(BOT_PREFIX)
+  return !text.startsWith(BOT_PREFIX) && !text.startsWith(LEGACY_BOT_PREFIX)
 }
 
 export function createHttpApp(deps: {
