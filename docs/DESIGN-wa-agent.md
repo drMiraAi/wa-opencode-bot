@@ -73,6 +73,7 @@ Skill yang butuh alat lokal (`ffmpeg`, `see`, `browser`, `winapp-*`, `blender`, 
 - Penunggu jawaban memakai `session.execution.succeeded`/`session.execution.failed`; `session.idle` tidak dipancarkan SDK saat ini dan menyebabkan balasan menunggu timeout 120 detik. Timeout tetap sebagai pengaman.
 - `message.list` SDK mengembalikan pesan terbaru lebih dulu; jawaban diambil dari asisten pertama tanpa `reverse()`, kalau tidak balasan selalu mengulang jawaban sesi sebelumnya.
 - Pesan panjang dipecah `chunkText` seperti sekarang.
+- Pesan master yang masuk bersamaan diantrikan per pengirim, bukan ditolak dengan "Masih memproses", agar obrolan cepat tidak kehilangan giliran.
 - Perintah `/help`, `/status`, `/model`, `/reset` tetap dipertahankan.
 - `/help` ditambah penjelasan singkat: balasan memakai persona master dan skill teks cloud.
 - Master tetap satu-satunya pengirim yang diproses (`isAuthorized`).

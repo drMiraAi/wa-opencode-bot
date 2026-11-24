@@ -148,6 +148,27 @@ describe("routeMessage", () => {
     expect(send).toHaveBeenCalledTimes(3)
   })
 
+  it("mengantre dua pesan master agar tidak ada yang dibuang", async () => {
+    const send = vi.fn(async (_text: string) => {})
+    const agent = {
+      prompt: vi.fn(async (text: string) => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        return `jawaban ${text}`
+      }),
+    } as unknown as Agent
+    const base = { chatJid: "1203630@g.us", senderJid: "62812@s.whatsapp.net", config, agent, send }
+
+    await Promise.all([
+      routeMessage({ ...base, msg: { chatJid: base.chatJid, senderJid: base.senderJid, text: "pertama" } }),
+      routeMessage({ ...base, msg: { chatJid: base.chatJid, senderJid: base.senderJid, text: "kedua" } }),
+    ])
+
+    expect(send.mock.calls.map((call) => call[0])).toEqual([
+      "jawaban pertama",
+      "jawaban kedua",
+    ])
+  })
+
   it("/help menjelaskan persona dan batas cloud", async () => {
     const send = vi.fn(async (_text: string) => {})
     const agent = { prompt: vi.fn(async () => "jawaban") } as unknown as Agent

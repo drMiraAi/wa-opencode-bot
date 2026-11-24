@@ -18,7 +18,7 @@ import type { Agent } from "./agent.js"
 import { chunkText, isAuthorized, parseCommand, type IncomingMessage } from "./policy.js"
 import type { Store } from "./store.js"
 
-const activeSenders = new Set<string>()
+const senderQueues = new Map<string, Promise<void>>()
 
 export const BOT_PREFIX = "OP.BOT "
 const LEGACY_BOT_PREFIX = "🤖 "
@@ -173,19 +173,18 @@ export async function routeMessage(deps: {
     }
   }
 
-  if (activeSenders.has(config.allowedSenderJid)) {
-    await send("Masih memproses pesan sebelumnya.")
-    return
-  }
-  activeSenders.add(config.allowedSenderJid)
-  try {
+  const queueKey = config.allowedSenderJid
+  const previous = senderQueues.get(queueKey) ?? Promise.resolve()
+  const task = previous.catch(() => {}).then(async () => {
     const answer = await agent.prompt(parsed.text)
     for (const part of chunkText(answer)) {
       await send(part)
     }
-  } finally {
-    activeSenders.delete(config.allowedSenderJid)
-  }
+  })
+  senderQueues.set(queueKey, task)
+  await task.finally(() => {
+    if (senderQueues.get(queueKey) === task) senderQueues.delete(queueKey)
+  })
 }
 
 export function extractIncoming(message: WAMessage): IncomingMessage | null {
