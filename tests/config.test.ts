@@ -29,6 +29,15 @@ describe("loadConfig", () => {
     expect(c.allowedSenderJids).toEqual(["62812@s.whatsapp.net", "243090988204144@lid"])
   })
 
+  it("menolak model OpenRouter yang bukan tier gratis", () => {
+    expect(() => loadConfig({ ...base, MODEL: "openai/gpt-4o" })).toThrow("MODEL")
+  })
+
+  it("menerima model gratis selain default", () => {
+    const c = loadConfig({ ...base, MODEL: "openrouter/meta-llama/llama-3.3-70b-instruct:free" })
+    expect(c.model).toBe("openrouter/meta-llama/llama-3.3-70b-instruct:free")
+  })
+
   it("menolak env var yang hilang", () => {
     expect(() => loadConfig({ ...base, SUPABASE_KEY: "" })).toThrow("SUPABASE_KEY")
   })

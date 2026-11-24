@@ -34,6 +34,12 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     throw new Error("PORT harus bilangan bulat positif")
   }
 
+  const model = env.MODEL || "openrouter/free-router"
+  const isFree = model === "openrouter/free-router" || (model.startsWith("openrouter/") && model.endsWith(":free"))
+  if (!isFree) {
+    throw new Error("MODEL harus model OpenRouter bertanda :free agar biaya tetap Rp 0")
+  }
+
   return {
     port,
     allowedGroupJid: env.ALLOWED_GROUP_JID!,
@@ -43,7 +49,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     supabaseUrl: env.SUPABASE_URL!,
     supabaseKey: env.SUPABASE_KEY!,
     openrouterApiKey: env.OPENROUTER_API_KEY!,
-    model: env.MODEL || "openrouter/free-router",
+    model,
     workDir: resolve(env.WORK_DIR || "work"),
   }
 }
