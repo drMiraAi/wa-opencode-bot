@@ -1,4 +1,5 @@
 import type { AppConfig } from "./config.js"
+import { buildContextPack, type ContextPacks } from "./context.js"
 import type { Store, TranscriptMessage } from "./store.js"
 
 export interface SdkLike {
@@ -43,9 +44,11 @@ export async function createAgent(deps: {
   store: Store
   config: AppConfig
   idleTimeoutMs?: number
+  context?: ContextPacks
 }): Promise<Agent> {
   const { sdk, store, config } = deps
   const timeout = deps.idleTimeoutMs ?? IDLE_TIMEOUT_MS
+  const context = deps.context
 
   return {
     async prompt(text) {
@@ -61,7 +64,9 @@ export async function createAgent(deps: {
       }
 
       let prefix = ""
+      let isNewSession = false
       if (!sessionId) {
+        isNewSession = true
         const history = await store.loadTranscript(20)
         if (history.length > 0) {
           prefix =
@@ -85,7 +90,10 @@ export async function createAgent(deps: {
 
       let timer: ReturnType<typeof setTimeout> | undefined
       try {
-        await sdk.sessions.prompt({ sessionID: sessionId, text: prefix + text })
+        const contextPrefix = isNewSession && context
+          ? buildContextPack({ ...context, text }) + "\n\n"
+          : ""
+        await sdk.sessions.prompt({ sessionID: sessionId, text: contextPrefix + prefix + text })
         await Promise.race([
           idle,
           new Promise<void>((resolve) => {

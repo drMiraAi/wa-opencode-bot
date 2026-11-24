@@ -4,6 +4,11 @@ import { createMemoryStore } from "../src/store.js"
 import type { AppConfig } from "../src/config.js"
 
 const config = { model: "openrouter/free-router", workDir: "work" } as AppConfig
+const context = {
+  globalRules: "Sapa master di setiap balasan.",
+  projectState: "Bot WA: grup OpenCode Ai, model openrouter/free-router.",
+  skillIndex: "Skill teks tersedia: docs.",
+}
 
 function fakeSdk(assistantText = "jawaban") {
   return {
@@ -36,6 +41,32 @@ describe("formatStatusReport", () => {
 })
 
 describe("agent", () => {
+  it("menyuntik context hanya pada sesi baru", async () => {
+    const store = createMemoryStore()
+    const sdk = fakeSdk()
+    const agent = await createAgent({ sdk: sdk as never, store, config, context })
+    await agent.prompt("halo master")
+    expect(sdk.sessions.prompt.mock.calls[0][0].text).toContain("Konteks agen WA v1")
+    await agent.prompt("lagi")
+    expect(sdk.sessions.prompt.mock.calls[1][0].text).not.toContain("Konteks agen WA v1")
+  })
+
+  it("tidak menyuntik context bila tidak dikirim", async () => {
+    const sdk = fakeSdk()
+    const agent = await createAgent({ sdk: sdk as never, store: createMemoryStore(), config })
+    await agent.prompt("halo")
+    expect(sdk.sessions.prompt.mock.calls[0][0].text).toBe("halo")
+  })
+
+  it("memasang ulang context setelah reset", async () => {
+    const store = createMemoryStore()
+    const sdk = fakeSdk()
+    const agent = await createAgent({ sdk: sdk as never, store, config, context })
+    await agent.reset()
+    await agent.prompt("halo lagi")
+    expect(sdk.sessions.prompt.mock.calls[0][0].text).toContain("Konteks agen WA v1")
+  })
+
   it("membuat session dan menyuntik transkrip pada pemakaian pertama", async () => {
     const store = createMemoryStore()
     await store.appendTranscript([{ role: "user", content: "pesan lama", at: "2026-11-22T00:00:00Z" }])
