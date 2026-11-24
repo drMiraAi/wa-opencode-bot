@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises"
+import { join } from "node:path"
+
 export type ContextPacks = {
   globalRules: string
   projectState: string
@@ -47,6 +50,19 @@ const SKILL_PATTERNS: Array<{ pattern: RegExp; card: SkillCard }> = [
     card: { id: "ultracave", reason: "jawab paling ringkas" },
   },
 ]
+
+export async function loadContextPacks(dir: string): Promise<ContextPacks> {
+  try {
+    const [globalRules, projectState, skillIndex] = await Promise.all([
+      readFile(join(dir, "global.md"), "utf8"),
+      readFile(join(dir, "project.md"), "utf8"),
+      readFile(join(dir, "skills-cloud.md"), "utf8"),
+    ])
+    return { globalRules, projectState, skillIndex }
+  } catch (error) {
+    throw new Error(`Gagal membaca context: ${String(error)}`)
+  }
+}
 
 export function selectSkill(text: string): SkillCard | null {
   if (LOCAL_TOOL_WORDS.test(text)) return null

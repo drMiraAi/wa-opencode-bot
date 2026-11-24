@@ -1,5 +1,8 @@
+import { mkdtemp, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { describe, it, expect } from "vitest"
-import { buildContextPack, CONTEXT_HEADER, selectSkill } from "../src/context.js"
+import { buildContextPack, CONTEXT_HEADER, loadContextPacks, selectSkill } from "../src/context.js"
 
 const packs = {
   globalRules: "Sapa master di setiap balasan.",
@@ -38,5 +41,24 @@ describe("selectSkill", () => {
     ["jawab ringkas hemat token", "ultracave"],
   ])("memilih %s -> %s", (text, id) => {
     expect(selectSkill(text)?.id).toBe(id)
+  })
+})
+
+describe("loadContextPacks", () => {
+  it("membaca tiga file context", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "wa-context-"))
+    await writeFile(join(dir, "global.md"), "ATURAN_GLOBAL")
+    await writeFile(join(dir, "project.md"), "STATE_PROYEK")
+    await writeFile(join(dir, "skills-cloud.md"), "INDEKS_SKILL")
+    expect(await loadContextPacks(dir)).toEqual({
+      globalRules: "ATURAN_GLOBAL",
+      projectState: "STATE_PROYEK",
+      skillIndex: "INDEKS_SKILL",
+    })
+  })
+
+  it("gagal jelas bila file context hilang", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "wa-context-"))
+    await expect(loadContextPacks(dir)).rejects.toThrow(/context/)
   })
 })
